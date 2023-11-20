@@ -62,23 +62,96 @@ const inputCloseUsername = document.querySelector(".form__input--user");
 const inputClosePin = document.querySelector(".form__input--pin");
 
 const displayMovements = function (movements) {
-
-  containerMovements.innerHTML = '';
+  containerMovements.innerHTML = "";
   movements.forEach(function (mov, i) {
-
-    const type = mov > 0? 'deposit': 'withdrawal';
+    const type = mov > 0 ? "deposit" : "withdrawal";
     const html = `
     <div class="movements__row">
-          <div class="movements__type movements__type--${type}">${i + 1} ${type}</div>
+          <div class="movements__type movements__type--${type}">${
+      i + 1
+    } ${type}</div>
           <div class="movements__value">${mov}€</div>
         </div>
     `;
 
-    containerMovements.insertAdjacentHTML('afterbegin', html);
+    containerMovements.insertAdjacentHTML("afterbegin", html);
   });
 };
 
-displayMovements(account1.movements);
+const calcDisplayBalance = function (movements) {
+  // finding the balance.
+  const balance = movements.reduce((acc, curr) => acc + curr, 0);
+  labelBalance.textContent = `${balance} EUR`;
+};
+
+const calcDisplaySummary = function (account) {
+  const incomes = account.movements
+    .filter((mov) => mov > 0)
+    .reduce((acc, curr) => acc + curr, 0);
+
+  labelSumIn.textContent = `${incomes}€`;
+
+  const out = account.movements
+    .filter((mov) => mov < 0)
+    .reduce((acc, curr) => acc + curr, 0);
+
+  labelSumOut.textContent = `${Math.abs(out)}€`;
+
+  const interest = account.movements
+    .filter((mov) => mov > 0)
+    .map((deposit) => (deposit * account.interestRate) / 100)
+    .filter((int) => int >= 1)
+    .reduce((acc, interest) => acc + interest, 0);
+
+  labelSumInterest.textContent = `${interest}€`;
+};
+
+const createUserNames = function (accounts) {
+  accounts.forEach((account) => {
+    account.username = account.owner
+      .toLowerCase()
+      .split(" ")
+      .map((part) => part.at(0))
+      .join("");
+  });
+};
+
+createUserNames(accounts);
+
+// Event handler
+let currentAccount;
+btnLogin.addEventListener("click", function (e) {
+  // Prevent form from submitting.
+  e.preventDefault();
+
+  currentAccount = accounts.find(
+    (acc) => acc.username === inputLoginUsername.value
+  );
+
+  if (currentAccount?.pin === +inputLoginPin.value) {
+    // Display UI
+    labelWelcome.textContent = `Welcome back, ${currentAccount.owner
+      .split(" ")
+      .at(0)}`;
+    
+    containerApp.style.opacity = 100;
+
+    // clear input fields
+    inputLoginUsername.value = inputLoginPin.value = '';
+    // to loose focus on the field.
+    inputLoginPin.blur();
+    
+    // Display movements
+    displayMovements(currentAccount.movements);
+    
+    // DIsplay balance
+    calcDisplayBalance(currentAccount.movements);
+    
+    // Display summary
+    calcDisplaySummary(currentAccount);
+  }
+});
+
 /////////////////////////////////////////////////
 /////////////////////////////////////////////////
 // LECTURES
